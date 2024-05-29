@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
   },
+  // to save the date of user creation date
   { timestamps: true }
 );
 
