@@ -30,7 +30,7 @@ function Profile() {
         setFileUploadPercentage(Math.round(progress));
         console.log(fileUploadPercentage);
       },
-      (error) => {
+      () => {
         setFileUploadError(true);
       },
       () => {
