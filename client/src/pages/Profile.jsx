@@ -1,4 +1,4 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState, useEffect } from "react";
 import {
   getDownloadURL,
@@ -7,13 +7,22 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { app } from "../firebase.js";
+
+import {
+  updateUserStart,
+  updateUserSuccess,
+  updateUserFailure,
+} from "../redux/user/userSlice.js";
 function Profile() {
   const [file, setFile] = useState(null);
   const [fileUploadPercentage, setFileUploadPercentage] = useState(0);
   const [fileUploadError, setFileUploadError] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
   const [formData, setFormData] = useState({});
 
-  const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+
+  const { currentUser, loading, error } = useSelector((state) => state.user);
   const fileRef = useRef(null);
   console.log(formData);
 
@@ -28,7 +37,6 @@ function Profile() {
         const progress =
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setFileUploadPercentage(Math.round(progress));
-        console.log(fileUploadPercentage);
       },
       () => {
         setFileUploadError(true);
@@ -43,6 +51,35 @@ function Profile() {
       }
     );
   }
+
+  function handleChange(e) {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    try {
+      dispatch(updateUserStart());
+      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const responseData = await res.json();
+      if (responseData.success === false) {
+        dispatch(updateUserFailure(responseData.message));
+        setUpdateSuccess(false);
+        return;
+      }
+      dispatch(updateUserSuccess(responseData));
+      setUpdateSuccess(true);
+    } catch (error) {
+      dispatch(updateUserFailure(error.message));
+      setUpdateSuccess(false);
+    }
+  }
   useEffect(() => {
     if (file) {
       handleFileUpload(file);
@@ -52,7 +89,7 @@ function Profile() {
   return (
     <div className="max-w-lg p-3 mx-auto">
       <h1 className="text-3xl text-center font-semibold my-7">Profile</h1>
-      <form className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="file"
           ref={fileRef}
@@ -61,7 +98,7 @@ function Profile() {
           accept="image/*"
         />
         <img
-          src={formData.avatar || currentUser.avatar}
+          src={formData?.avatar || currentUser.avatar}
           onClick={() => fileRef.current.click()}
           alt="profile pic"
           className="w-24 h-24 rounded-full self-center object-cover cursor-pointer mt-2"
@@ -83,24 +120,30 @@ function Profile() {
           type="text"
           id="username"
           placeholder="username"
-          // defaultValue={currentUser.username}
+          defaultValue={currentUser?.username}
           className="border rounded-lg p-3 focus:outline-none"
+          onChange={handleChange}
         />
         <input
           type="email"
           id="email"
           placeholder="email"
-          // defaultValue={currentUser.email}
+          defaultValue={currentUser?.email}
           className="border rounded-lg p-3 focus:outline-none"
+          onChange={handleChange}
         />
         <input
           type="text"
           id="password"
           placeholder="password"
           className="border rounded-lg p-3 focus:outline-none"
+          onChange={handleChange}
         />
-        <button className="bg-slate-700 hover:opacity-95 uppercase p-3 rounded-lg text-white disabled:opacity-80">
-          update
+        <button
+          disabled={loading}
+          className="bg-slate-700 hover:opacity-95 uppercase p-3 rounded-lg text-white disabled:opacity-80"
+        >
+          {loading ? "loading..." : " update"}
         </button>
       </form>
       <div className="flex justify-between items-center mt-3">
@@ -111,6 +154,14 @@ function Profile() {
           Sign out
         </span>
       </div>
+      <p className="text-center">
+        {error && <span className="text-red-700 font-bold">{error}</span>}
+        {updateSuccess && (
+          <span className="text-green-700 font-bold">
+            User updated successfully!
+          </span>
+        )}
+      </p>
     </div>
   );
 }

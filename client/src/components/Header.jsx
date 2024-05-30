@@ -35,7 +35,8 @@ function Header() {
           <Link to={"/profile"}>
             {currentUser ? (
               <img
-                src={currentUser.avatar.split("=")[0] + "=s100"}
+                // src={currentUser.avatar.split("=")[0] + "=s100"}
+                src={currentUser.avatar}
                 alt="profile"
                 className="w-8 h-8 rounded-full"
               />
