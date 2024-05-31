@@ -1,4 +1,79 @@
+import { useState } from "react";
+import {
+  getStorage,
+  getDownloadURL,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { app } from "../firebase.js";
+
 function CreateListing() {
+  const [files, setFiles] = useState([]);
+  const [formData, setFormData] = useState({
+    imageUrls: [],
+  });
+  const [uploading, setUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState(false);
+  function handleUploadImage() {
+    if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
+      setUploading(true);
+      setImageUploadError(false);
+      const promises = [];
+      for (let i = 0; i < files.length; i++) {
+        promises.push(storeImage(files[i]));
+      }
+
+      Promise.all(promises)
+        .then((urls) => {
+          setFormData({
+            ...formData,
+            imageUrls: formData.imageUrls.concat(urls),
+          });
+          setImageUploadError(false);
+          setUploading(false);
+        })
+        .catch(() => {
+          setUploading(false);
+          setImageUploadError("Image upload failed (2 mb max per image)");
+        });
+    } else {
+      setUploading(false);
+      setImageUploadError("You can only upload 6 image per listing");
+    }
+  }
+
+  async function storeImage(file) {
+    return new Promise((resolve, reject) => {
+      const storage = getStorage(app);
+      const fileName = new Date().getTime() + file.name;
+      const storageRef = ref(storage, fileName);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`upload is ${progress}% done`);
+        },
+        (error) => {
+          reject(error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          });
+        }
+      );
+    });
+  }
+
+  function handleRemoveImage(idx) {
+    setFormData({
+      ...formData,
+      imageUrls: formData.imageUrls.filter((_, i) => i !== idx),
+    });
+  }
+
   return (
     <main className="p-3 mx-auto max-w-5xl">
       <h1 className="text-3xl text-center font-semibold my-7">
@@ -127,13 +202,45 @@ function CreateListing() {
               multiple
               id="images"
               className="border p-3 border-gray-300 rounded w-full"
+              onChange={(e) => setFiles(e.target.files)}
             />
             <button
-              className={`border text-green-600 border-green-600 px-3 py-1 rounded uppercase hover:bg-green-600 hover:text-white transition-all disabled:text-gray-300 disabled:border-gray-300`}
+              onClick={handleUploadImage}
+              disabled={uploading}
+              type="button"
+              className={`border text-green-600 border-green-600 px-3 py-1 rounded uppercase ${
+                uploading === false && "hover:bg-green-600 hover:text-white"
+              } transition-all disabled:text-gray-400 disabled:border-gray-400`}
             >
-              Upload
+              {uploading ? "Uploading..." : "Upload"}
             </button>
           </div>
+          {imageUploadError && (
+            <p className="text-sm text-red-700 text-center">
+              {imageUploadError}
+            </p>
+          )}
+
+          {formData.imageUrls.length > 0 &&
+            formData.imageUrls.map((url, index) => (
+              <div
+                className="flex justify-between items-center p-3 border rounded"
+                key={url}
+              >
+                <img
+                  src={url}
+                  alt="listing image"
+                  className="w-20 h-20 object-contain rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(index)}
+                  className="text-red-700 font-semibold bg-red-100 rounded-lg p-2 hover:opacity-75"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
 
           <button className="text-white bg-slate-700 hover:opacity-95 p-3 uppercase rounded disabled:opacity-80">
             Create Listing
