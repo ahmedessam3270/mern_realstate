@@ -285,7 +285,11 @@ function Profile() {
                 to={`/listing/${listing._id}`}
                 className="h-16 w-16 object-contain"
               >
-                <img src={listing.imageUrls[0]} alt="listing cover" />
+                <img
+                  src={listing.imageUrls[0]}
+                  alt="listing cover"
+                  className="object-contain h-full w-full rounded"
+                />
               </Link>
               <Link
                 to={`/listing/${listing._id}`}
@@ -294,9 +298,12 @@ function Profile() {
                 <p>{listing.name}</p>
               </Link>
               <div className="flex flex-col gap-2 ">
-                <button className="text-green-700 font-semibold hover:bg-green-100 rounded-lg p-1.5">
+                <Link
+                  to={`/update-listing/${listing._id}`}
+                  className="text-green-700 font-semibold hover:bg-green-100 rounded-lg p-1.5"
+                >
                   <MdEdit />
-                </button>
+                </Link>
                 <button
                   onClick={() => handleDeleteListing(listing._id)}
                   className="text-red-700 font-semibold hover:bg-red-100 rounded-lg p-1.5"
