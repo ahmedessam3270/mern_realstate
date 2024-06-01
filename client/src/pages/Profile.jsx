@@ -158,6 +158,23 @@ function Profile() {
     }
   }
 
+  async function handleDeleteListing(id) {
+    try {
+      const res = await fetch(`/api/listing/delete/${id}`, {
+        method: "DELETE",
+      });
+      const responseData = await res.json();
+      if (responseData.success === false) {
+        return;
+      }
+      setUserListings((prevListings) =>
+        prevListings.filter((listing) => listing._id !== id)
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   return (
     <div className="max-w-lg p-3 mx-auto">
       <h1 className="text-3xl text-center font-semibold my-7">Profile</h1>
@@ -248,7 +265,8 @@ function Profile() {
       </p>
       <button
         onClick={handleShowListings}
-        className="my-3 rounded bg-teal-100 text-teal-700 font-semibold hover:opacity-95 w-fit p-1.5 block mx-auto"
+        disabled={userListings.length === 0}
+        className={`my-3 rounded bg-teal-100 text-teal-700 font-semibold hover:opacity-95 w-fit p-1.5 block mx-auto disabled:bg-slate-100 disabled:text-slate-400 `}
       >
         Show Listings
       </button>
@@ -277,10 +295,13 @@ function Profile() {
                 <p>{listing.name}</p>
               </Link>
               <div className="flex flex-col gap-2 ">
-                <button className="text-green-700 font-semibold bg-green-100 rounded-lg p-1.5 hover:opacity-75">
+                <button className="text-green-700 font-semibold hover:bg-green-100 rounded-lg p-1.5">
                   <MdEdit />
                 </button>
-                <button className="text-red-700 font-semibold bg-red-100 rounded-lg p-1.5 hover:opacity-75">
+                <button
+                  onClick={() => handleDeleteListing(listing._id)}
+                  className="text-red-700 font-semibold hover:bg-red-100 rounded-lg p-1.5"
+                >
                   <MdDelete />
                 </button>
               </div>
