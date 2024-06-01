@@ -265,7 +265,6 @@ function Profile() {
       </p>
       <button
         onClick={handleShowListings}
-        disabled={userListings.length === 0}
         className={`my-3 rounded bg-teal-100 text-teal-700 font-semibold hover:opacity-95 w-fit p-1.5 block mx-auto disabled:bg-slate-100 disabled:text-slate-400 `}
       >
         Show Listings
