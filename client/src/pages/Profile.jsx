@@ -1,3 +1,5 @@
+import { MdDelete } from "react-icons/md";
+import { MdEdit } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -21,18 +23,27 @@ import {
   signoutFailure,
 } from "../redux/user/userSlice.js";
 function Profile() {
+  // ******* All Pieces of State ********
+  // File Pieces of state
   const [file, setFile] = useState(null);
   const [fileUploadPercentage, setFileUploadPercentage] = useState(0);
   const [fileUploadError, setFileUploadError] = useState(false);
+  // User Update Pieces of state
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  // Form Data Pieces of state
   const [formData, setFormData] = useState({});
+  // Listings pieces of state
+  const [showListingsError, setShowListingsError] = useState(false);
+  const [userListings, setUserListings] = useState([]);
 
+  // REDUX Hooks and Functions
   const dispatch = useDispatch();
-
   const { currentUser, loading, error } = useSelector((state) => state.user);
-  const fileRef = useRef(null);
-  console.log(formData);
 
+  // Creating a reference to the file input
+  const fileRef = useRef(null);
+
+  // Function to handle Image Upload
   function handleFileUpload(file) {
     const storage = getStorage(app);
     const fileName = new Date().getTime() + file.name;
@@ -59,10 +70,12 @@ function Profile() {
     );
   }
 
+  // function to handle Listing form changes
   function handleChange(e) {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   }
 
+  // Function to handle Listing form submission
   async function handleSubmit(e) {
     e.preventDefault();
     try {
@@ -88,6 +101,7 @@ function Profile() {
     }
   }
 
+  // Function to handle Delete User
   async function handleDeleteUser() {
     try {
       dispatch(deleteUserStart());
@@ -106,6 +120,7 @@ function Profile() {
     }
   }
 
+  // function to handle User Signout
   async function handleSignout() {
     try {
       dispatch(signoutStart());
@@ -125,6 +140,23 @@ function Profile() {
       handleFileUpload(file);
     }
   }, [file]);
+
+  // function to handle showing listings
+  async function handleShowListings() {
+    try {
+      setShowListingsError(false);
+      const res = await fetch(`/api/user/listings/${currentUser._id}`);
+      const responseData = await res.json();
+      if (responseData.success === false) {
+        setShowListingsError(true);
+        return;
+      }
+      setUserListings(responseData);
+      console.log(responseData);
+    } catch (error) {
+      setShowListingsError(true);
+    }
+  }
 
   return (
     <div className="max-w-lg p-3 mx-auto">
@@ -214,6 +246,48 @@ function Profile() {
           </span>
         )}
       </p>
+      <button
+        onClick={handleShowListings}
+        className="my-3 rounded bg-teal-100 text-teal-700 font-semibold hover:opacity-95 w-fit p-1.5 block mx-auto"
+      >
+        Show Listings
+      </button>
+      {showListingsError && (
+        <p className="text-red-700 mt-5">Error showing listings</p>
+      )}
+
+      {userListings && userListings.length > 0 && (
+        <div className="flex flex-col gap-5 mt-8">
+          <h1 className="text-2xl font-semibold text-center">Your Listings</h1>
+          {userListings.map((listing) => (
+            <div
+              key={listing._id}
+              className="flex justify-between items-center border border-slate-300 p-2 rounded-lg hover:shadow-md"
+            >
+              <Link
+                to={`/listing/${listing._id}`}
+                className="h-16 w-16 object-contain"
+              >
+                <img src={listing.imageUrls[0]} alt="listing cover" />
+              </Link>
+              <Link
+                to={`/listing/${listing._id}`}
+                className="text-center text-slate-700 flex-1 truncate font-semibold hover:text-slate-900"
+              >
+                <p>{listing.name}</p>
+              </Link>
+              <div className="flex flex-col gap-2 ">
+                <button className="text-green-700 font-semibold bg-green-100 rounded-lg p-1.5 hover:opacity-75">
+                  <MdEdit />
+                </button>
+                <button className="text-red-700 font-semibold bg-red-100 rounded-lg p-1.5 hover:opacity-75">
+                  <MdDelete />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
