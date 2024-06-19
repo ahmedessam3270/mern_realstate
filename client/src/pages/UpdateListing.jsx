@@ -293,7 +293,9 @@ function UpdateListing() {
                 className="flex flex-col items-center"
               >
                 <p>Regular Price</p>
-                <p className="text-xs">($ / month)</p>
+                {formData.type === "rent" && (
+                  <span className="text-xs">($ / month)</span>
+                )}
               </label>
             </div>
 
@@ -314,7 +316,9 @@ function UpdateListing() {
                   className="flex flex-col items-center"
                 >
                   <p>Discounted Price</p>
-                  <p className="text-xs">($ / month)</p>
+                  {formData.type === "rent" && (
+                    <span className="text-xs">($ / month)</span>
+                  )}
                 </label>
               </div>
             )}
