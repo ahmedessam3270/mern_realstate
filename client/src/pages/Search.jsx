@@ -52,6 +52,18 @@ function Search() {
     }
   }
 
+  async function onShowMoreClick() {
+    const numberOfListings = listings.length;
+    const startIndex = numberOfListings;
+    const urlParams = new URLSearchParams(location.search);
+    urlParams.set("startIndex", startIndex);
+    const searchQuery = urlParams.toString();
+    const response = await fetch(`/api/listing/get?${searchQuery}`);
+    const data = await response.json();
+    if (data.length < 9) setShowMore(false);
+    setListings([...listings, ...data]);
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     const urlParams = new URLSearchParams();
@@ -70,8 +82,7 @@ function Search() {
 
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
-  console.log(listings);
-
+  const [showMore, setShowMore] = useState(false);
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const searchTermFromUrl = urlParams.get("searchTerm");
@@ -103,10 +114,16 @@ function Search() {
 
     const fetchListings = async () => {
       try {
+        setShowMore(false);
         setLoading(true);
         const searchQuery = urlParams.toString();
         const response = await fetch(`/api/listing/get?${searchQuery}`);
         const data = await response.json();
+        if (data.length > 8) {
+          setShowMore(true);
+        } else {
+          setShowMore(false);
+        }
         setListings(data);
       } catch (error) {
         console.log(error);
@@ -241,6 +258,14 @@ function Search() {
             listings.map((listing) => (
               <ListingItem key={listing._id} listing={listing} />
             ))}
+          {showMore && (
+            <button
+              className="text-slate-100 font-bold text-center w-32 p-3 border-2 rounded-lg mt-5 bg-slate-700 hover:bg-slate-800 content-center mx-auto"
+              onClick={onShowMoreClick}
+            >
+              Show more
+            </button>
+          )}
         </div>
       </div>
     </div>
