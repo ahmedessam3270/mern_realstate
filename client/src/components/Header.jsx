@@ -19,7 +19,7 @@ function Header() {
     const urlParams = new URLSearchParams(location.search);
     const searchTermFromUrl = urlParams.get("searchTerm");
     if (searchTermFromUrl) setSearchTerm(searchTermFromUrl);
-  }, [searchTerm]);
+  }, [location.search]);
   return (
     <header className="shadow-md bg-slate-200">
       <div className="flex justify-between items-center mx-auto max-w-6xl p-3">
